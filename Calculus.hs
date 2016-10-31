@@ -60,7 +60,7 @@ maclaurin :: Exp -> Double -> Int -> Double
 maclaurin expresion x n 
    = maclaurin' tripleTerms 0 x
    where
-      tripleTerms = zipWith3 (listDeriv) (take (n-1) (scanl (*) 1 [1, 2..])) (take (n-1) (scanl (*) x [x, x..]))
+      tripleTerms = zip3 (listDeriv) (take (n-1) (scanl (*) 1 [1, 2..])) (take (n-1) (scanl (*) x [x, x..]))
       (listDeriv, _) = unzip (take (n-1) (iterate diff' (expresion, "x")))
       maclaurin' :: [(Exp, Double, Double)] -> Double -> Double -> Double  
       maclaurin' [] sum _ 
