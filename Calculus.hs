@@ -13,19 +13,60 @@ data Exp = Val Double | Id String | UnApp UnOp Exp | BinApp BinOp Exp Exp
 
 type Env = [(String, Double)]
 
+functionDatabase :: [(UnOp, Double -> Double)]
+functionDatabase = [(Neg, (negate)), (Sin, (sin)), (Cos, (cos)), (Log, (log))]
 
+functionDatabase' :: [(BinOp, Double -> Double -> Double)]
+functionDatabase' = [(Add, (+)), (Mul, (*)), (Div, (/))]
 
 lookUp :: Eq a => a -> [(a, b)] -> b
-lookUp = error "TODO implement lookUp"
+lookUp _ [] 
+   = error "search parameter is not a member of the list"
+lookUp a ((x, x') : xs) 
+   | x == a = x'
+   | otherwise = lookUp a xs 
 
 eval :: Exp -> Env -> Double
-eval = error "TODO: implement eval"
+eval (Val number) database
+   = number
+eval (Id variable) database
+   = fromJust (lookup variable  database)
+eval (UnApp function expresion) database
+   = fromJust (lookup function functionDatabase) (eval expresion database)
+eval (BinApp function expresion expresion') database
+   = fromJust (lookup function functionDatabase') (eval expresion database) (eval expresion' database)
 
 diff :: Exp -> String -> Exp
-diff = error "TODO: implement diff"
+diff (Val number) refrence
+   = Val 0.0
+diff (Id variable) refrence
+   | variable  == refrence = Val 1.0
+   | otherwise             = Val 0.0
+diff (UnApp function expresion) refrence
+   | function  == Sin = BinApp Mul (UnApp Cos expresion) (diff expresion refrence)
+   | function  == Cos = UnApp Neg (BinApp Mul (UnApp Sin expresion) (diff expresion refrence))
+   | function  == Log = BinApp Div (diff expresion refrence) expresion
+   | otherwise        = UnApp Neg (diff expresion refrence)
+diff (BinApp function expresion expresion') refrence
+   | function  == Add = BinApp Add (diff expresion refrence) (diff expresion' refrence)
+   | function  == Mul = BinApp Add (BinApp Mul (expresion) (diff expresion' refrence)) (BinApp Mul (diff expresion refrence) (expresion'))
+   | otherwise        = BinApp Div (BinApp Add (BinApp Mul (diff expresion refrence) (expresion')) (UnApp Neg (BinApp Mul (expresion) (diff expresion' refrence)))) (BinApp Mul expresion' expresion')
 
+diff' :: (Exp, String) -> (Exp, String)
+diff' (expresion, refrence) = (diff expresion refrence, refrence)
+
+--Add f(0) !!!
 maclaurin :: Exp -> Double -> Int -> Double
-maclaurin = error "TODO: implement maclaurin"
+maclaurin expresion x n 
+   = maclaurin' tripleTerms 0 x
+   where
+      tripleTerms = zipWith3 (listDeriv) (take (n-1) (scanl (*) 1 [1, 2..])) (take (n-1) (scanl (*) x [x, x..]))
+      (listDeriv, _) = unzip (take (n-1) (iterate diff' (expresion, "x")))
+      maclaurin' :: [(Exp, Double, Double)] -> Double -> Double -> Double  
+      maclaurin' [] sum _ 
+         = sum
+      maclaurin' ((derivative, factorial, power) : xs) sum x
+         = maclaurin' xs ((eval derivative [("x", x)]) * power / factorial + sum) x 
 
 showExp :: Exp -> String
 showExp = error "TODO: implement showExp"
