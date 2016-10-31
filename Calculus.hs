@@ -58,15 +58,12 @@ diff' (expresion, refrence) = (diff expresion refrence, refrence)
 --Add f(0) !!!
 maclaurin :: Exp -> Double -> Int -> Double
 maclaurin expresion x n 
-   = maclaurin' tripleTerms 0 x
+   = foldl (+) 0.0 terms
    where
-      tripleTerms = zip3 (listDeriv) (take (n-1) (scanl (*) 1 [1, 2..])) (take (n-1) (scanl (*) x [x, x..]))
-      (listDeriv, _) = unzip (take (n-1) (iterate diff' (expresion, "x")))
-      maclaurin' :: [(Exp, Double, Double)] -> Double -> Double -> Double  
-      maclaurin' [] sum _ 
-         = sum
-      maclaurin' ((derivative, factorial, power) : xs) sum x
-         = maclaurin' xs ((eval derivative [("x", x)]) * power / factorial + sum) x 
+      terms = zipWith3 (nterm) (listDeriv) (take (n) (scanl (*) 1 [1, 2..])) (take (n) (scanl (*) 1 [x, x..]))
+      (listDeriv, _) = unzip (take (n) (iterate diff' (expresion, "x")))
+      nterm :: Exp -> Double -> Double -> Double  
+      nterm expresion factorial power = (eval expresion [("x", 0)]) * power / factorial 
 
 showExp :: Exp -> String
 showExp = error "TODO: implement showExp"
