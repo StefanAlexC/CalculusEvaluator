@@ -65,8 +65,31 @@ maclaurin expresion x n
       nterm :: Exp -> Double -> Double -> Double  
       nterm expresion factorial power = (eval expresion [("x", 0)]) * power / factorial 
 
+stringUnOp :: UnOp -> String
+stringUnOp function
+   | function == Sin = "sin("
+   | function == Cos = "cos("
+   | function == Log = "log("
+   | function == Neg = "-("
+
 showExp :: Exp -> String
-showExp = error "TODO: implement showExp"
+showExp (Val number)
+   = show number
+showExp (Id variable)
+   = variable
+showExp (UnApp function expresion)
+   = foldr (++) "" [stringUnOp function, showExp expresion, ")"]   
+showExp (BinApp Add expresion expresion')
+   | showExp expresion  == "0" = showExp expresion'
+   | showExp expresion' == "0" = showExp expresion
+   | otherwise = foldr (++) "" ["(", showExp expresion, "+", showExp expresion', ")"] 
+showExp (BinApp Mul expresion expresion')
+   | showExp expresion  == "1" = showExp expresion'
+   | showExp expresion' == "1" = showExp expresion
+   | otherwise = foldr (++) "" ["(", showExp expresion, "*", showExp expresion', ")"]
+showExp (BinApp Div expresion expresion')
+   = foldr (++) "" ["(", showExp expresion, "/", showExp expresion', ")"]
+   
 
 ---------------------------------------------------------------------------
 -- Test cases from the spec.
